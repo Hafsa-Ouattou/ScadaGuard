@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SCADAGuard — Supervision des accès</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+
+  <div class="entete">
+    <div class="identite">
+      <span class="icone">🛡️</span>
+      <div>
+        <h1>SCADAGuard</h1>
+        <p>ONEE — Supervision des accès au système de télégestion</p>
+      </div>
+    </div>
+    <div class="actions">
+      <a class="bouton bouton-export-excel {% if not est_admin %}desactive{% endif %}"
+         href="{{ url_for('export_excel') }}">Exporter Excel</a>
+      <a class="bouton bouton-export-pdf {% if not est_admin %}desactive{% endif %}"
+         href="{{ url_for('export_pdf') }}">Exporter PDF</a>
+      <div class="compte">
+        <div>👤 {{ utilisateur }} · {{ "Administrateur" if est_admin else "Agent (lecture seule)" }}</div>
+        <a href="{{ url_for('deconnexion') }}">Déconnexion</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="grille-kpi">
+    <div class="carte-kpi">
+      <div class="libelle">Évènements fichiers</div>
+      <div class="valeur" id="kpi-fichiers">0</div>
+    </div>
+    <div class="carte-kpi alerte">
+      <div class="libelle">Alertes critiques</div>
+      <div class="valeur" id="kpi-alertes">0</div>
+    </div>
+    <div class="carte-kpi">
+      <div class="libelle">Connexions réseau</div>
+      <div class="valeur" id="kpi-reseau">0</div>
+    </div>
+    <div class="carte-kpi">
+      <div class="libelle">Processus suivis</div>
+      <div class="valeur" id="kpi-processus">0</div>
+    </div>
+    <div class="carte-kpi">
+      <div class="libelle">Évènements USB</div>
+      <div class="valeur" id="kpi-usb">0</div>
+    </div>
+  </div>
+
+  <div class="onglets">
+    <div class="entetes-onglets">
+      <button class="entete-onglet actif" data-onglet="fichiers">🗂️ Fichiers</button>
+      <button class="entete-onglet" data-onglet="reseau">🌐 Réseau</button>
+      <button class="entete-onglet" data-onglet="processus">⚙️ Processus</button>
+      <button class="entete-onglet" data-onglet="usb">💾 USB</button>
+      <button class="entete-onglet" data-onglet="journal">📋 Journal d'audit</button>
+      <button class="entete-onglet" data-onglet="stats">📊 Statistiques</button>
+    </div>
+
+    <!-- Onglet Fichiers -->
+    <div class="contenu-onglet actif" id="onglet-fichiers">
+      <div class="titre-onglet">Surveillance en temps réel du dossier surveillé</div>
+      <div class="description-onglet">
+        Toute création, modification, renommage ou suppression y est détectée.
+        Un grand nombre d'évènements en peu de temps déclenche une alerte critique
+      </div>
+      <table class="tableau-donnees">
+        <thead><tr><th style="width:110px">Heure</th><th>Évènement</th></tr></thead>
+      </table>
+      <div class="zone-defilement"><table class="tableau-donnees"><tbody id="corps-fichiers"></tbody></table></div>
+    </div>
+
+    <!-- Onglet Réseau -->
+    <div class="contenu-onglet" id="onglet-reseau">
+      <div class="titre-onglet">Connexions réseau actives du poste</div>
+      <table class="tableau-donnees">
+        <thead><tr>
+          <th>Adresse locale</th><th>Adresse distante</th><th style="width:90px">PID</th><th style="width:150px">Statut</th>
+        </tr></thead>
+      </table>
+      <div class="zone-defilement"><table class="tableau-donnees"><tbody id="corps-reseau"></tbody></table></div>
+    </div>
+
+    <!-- Onglet Processus -->
+    <div class="contenu-onglet" id="onglet-processus">
+      <div class="titre-onglet">Processus actifs sur le poste</div>
+      <table class="tableau-donnees">
+        <thead><tr>
+          <th style="width:70px">PID</th><th>Nom</th><th>Chemin d'exécution</th><th style="width:80px">CPU %</th><th style="width:110px">Statut</th>
+        </tr></thead>
+      </table>
+      <div class="zone-defilement"><table class="tableau-donnees"><tbody id="corps-processus"></tbody></table></div>
+    </div>
+
+    <!-- Onglet USB -->
+    <div class="contenu-onglet" id="onglet-usb">
+      <div class="titre-onglet">Surveillance des clés USB et disques amovibles</div>
+      <div class="description-onglet">
+        Vecteur d'infection classique sur les postes industriels isolés du réseau.
+      </div>
+      <table class="tableau-donnees">
+        <thead><tr><th style="width:110px">Heure</th><th>Évènement</th></tr></thead>
+      </table>
+      <div class="zone-defilement"><table class="tableau-donnees"><tbody id="corps-usb"></tbody></table></div>
+    </div>
+
+    <!-- Onglet Journal -->
+    <div class="contenu-onglet" id="onglet-journal">
+      <div class="titre-onglet">Journal d'audit centralisé (tous modules confondus)</div>
+      <div class="description-onglet">
+        Journal protégé par chaînage cryptographique :toute modification ou suppression d'une ligne casse la chaîne et devient détectable.
+        <button class="bouton-secondaire" id="bouton-verifier-integrite" style="margin-left:8px;">🔒 Vérifier l'intégrité</button>
+        <span id="resultat-integrite" style="margin-left:8px; font-weight:bold;"></span>
+      </div>
+      <table class="tableau-donnees">
+        <thead><tr>
+          <th style="width:100px">Heure</th><th style="width:110px">Niveau</th><th style="width:120px">Module</th><th>Message</th>
+        </tr></thead>
+      </table>
+      <div class="zone-defilement"><table class="tableau-donnees"><tbody id="corps-journal"></tbody></table></div>
+    </div>
+
+    <!-- Onglet Statistiques -->
+    <div class="contenu-onglet" id="onglet-stats">
+      <div class="titre-onglet">Statistiques des évènements de sécurité</div>
+      <div class="grille-stats">
+        <div class="carte-graphique">
+          <h3>Répartition par niveau</h3>
+          <canvas id="graphique-niveaux" height="220"></canvas>
+        </div>
+        <div class="carte-graphique">
+          <h3>Évènements par module</h3>
+          <canvas id="graphique-modules" height="220"></canvas>
+        </div>
+      </div>
+
+      <div class="panneau-notifs">
+        <div>Notifications email :
+          <span id="statut-email" class="statut-config">vérification…</span>
+        </div>
+        <div style="color:var(--texte-muet); margin-top:4px;">
+          Les alertes critiques (ex. détection ransomware) peuvent être envoyées par email
+          depuis <strong>scadaguard.alertes@gmail.com</strong>. Configuration à faire dans le
+          fichier <code>.env</code> (voir README).
+        </div>
+        {% if est_admin %}
+        <button class="bouton-secondaire" id="bouton-test-email">Envoyer un email de test</button>
+        <div id="resultat-test-email"></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>
