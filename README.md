@@ -16,7 +16,6 @@ SCADAGuard is a **host-based intrusion detection system (HIDS)** that watches a 
 7. [Results](#7-results)
 8. [What I learned and what is still missing](#8-what-i-learned-and-what-is-still-missing)
 9. [Run it yourself](#9-run-it-yourself)
-10. [Project structure](#10-project-structure)
 
 ---
 
@@ -24,7 +23,7 @@ SCADAGuard is a **host-based intrusion detection system (HIDS)** that watches a 
 
 The internship started with a visit to the site that hosts the water branch's **telemanagement (SCADA) system**: the infrastructure used to monitor and control pumping stations, reservoirs, level and pressure sensors and automated valves from a distance.
 
-That visit changed the direction of the project. These systems are critical for the continuity of a public service, yet they rely on **workstations whose access must be strictly controlled**. A human mistake, a compromised account or a piece of malware could disturb the monitoring of the installations. And SCADA systems were historically designed when they were isolated from larger networks, so security was not a design concern.
+These systems are critical for the continuity of a public service, yet they rely on **workstations whose access must be strictly controlled**. A human mistake, a compromised account or a piece of malware could disturb the monitoring of the installations. And SCADA systems were historically designed when they were isolated from larger networks, so security was not a design concern.
 
 > **Research question:** *How can a workstation with access to the telemanagement system be secured and monitored locally, so that signs of compromise are detected in real time?*
 
@@ -35,7 +34,7 @@ Workstations are usually protected by perimeter defences (firewall, access contr
 
 ### Design choice: detect, don't block
 
-SCADAGuard is a **HIDS, not a HIPS**. It observes and alerts, but it never blocks an attack and never sits between the operator and the telemanagement system. The operator keeps direct access, and SCADAGuard's login only protects its own dashboard. On a critical system, a security tool that could interrupt operations would be a risk of its own.
+SCADAGuard is a **HIDS**, It observes and alerts.The operator keeps direct access, and SCADAGuard's login only protects its own dashboard. On a critical system, a security tool that could interrupt operations would be a risk of its own.
 
 It combines two detection styles:
 
