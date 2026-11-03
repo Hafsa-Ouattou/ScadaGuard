@@ -5,8 +5,6 @@
 SCADAGuard is a **host-based intrusion detection system (HIDS)** that watches a workstation with access to a SCADA / telemanagement system. It detects ransomware-like behaviour, infected USB drives, suspicious processes and unusual network connections, records everything in a **tamper-evident audit log**, and **emails the administrator** when something critical happens.
 
 
----
-
 ## Table of contents
 
 1. [The problem](#1-the-problem)
@@ -34,7 +32,6 @@ That visit changed the direction of the project. These systems are critical for 
 
 Workstations are usually protected by perimeter defences (firewall, access control) and by user awareness. Those watch mostly **incoming traffic, not what happens on the workstation itself**. A threat that gets past the perimeter, such as an infected USB drive or a malicious attachment, can go unnoticed locally.
 
-Professional host-based tools exist (OSSEC, Wazuh, EDR products), but they are complex to deploy and configure. SCADAGuard is a **pedagogical prototype** that reproduces their basic principles on a standard workstation.
 
 ### Design choice: detect, don't block
 
@@ -178,25 +175,7 @@ python test_alerte_avance.py     # the 4-step ransomware simulation
 - Splitting the system into **independent modules** made bugs far easier to find: each one was fixed where it lived, not hunted down in the whole app.
 - **Simulating the attack** is a better test than reading the code. It showed that a pure "burst" rule is not enough, which is why the ransom-note signal was added.
 - Security tools have to be **safe by design**: passive detection, hashed passwords, a lockout, and a log that can prove it was not altered.
-## 9. Project structure
 
-.
-├── app.py                      # Flask app: routes, API, hash-chained journal, exports
-├── auth.py                     # Argon2id login, roles, brute-force lockout
-├── notifications_email.py      # Gmail SMTP alerts (threshold + cooldown)
-├── surveillance_fichiers.py    # File monitor (watchdog), ransomware detection
-├── surveillance_usb.py         # USB / removable drive monitor
-├── surveillance_reseau.py      # Network connections monitor (psutil)
-├── surveillance_processus.py   # Process monitor (psutil)
-├── init_utilisateurs.py        # Creates users.json with demo accounts
-├── test_alerte.py              # Simulation: burst of file creations
-├── test_alerte_avance.py       # Simulation: 4-step ransomware attack
-├── templates/                  # login.html, dashboard.html
-├── static/                     # style.css, dashboard.js
-├── screenshots/                # Images used in this README
-├── scadaguard_flow.png         # Flow diagram
-├── requirements.txt
-└── .env.example
 
 
 **Built with:** Python · Flask · watchdog · psutil · argon2-cffi · openpyxl · ReportLab · smtplib · HTML / CSS / JavaScript · Chart.js · Visual Studio Code
