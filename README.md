@@ -96,55 +96,56 @@ Monitors (background threads)  ->  Event queue  ->  Flask server  ->  Hash-chain
 | `CRITIQUE` | Likely attack (ransomware burst, ransom note, USB with executables) |
 
 
-## 5. Step 3: Building it, one module at a time
+5. Step 3: Building it
 
-I built each part separately and tested it on its own before connecting it to the rest. Here is what each one does and why I made it that way.
+Login and brute-force protection (auth.py)
 
-### Login and brute-force protection (`auth.py`)
 I never store passwords as plain text. Each one is hashed with Argon2id, which OWASP recommends because it is slow and uses a lot of memory, so guessing passwords at scale becomes expensive. After 3 wrong attempts the account is locked for 60 seconds, and every login attempt is saved in an audit file.
 
-### File monitor and ransomware detection (`surveillance_fichiers.py`)
-This one uses `watchdog` to watch a folder. Every file event (create, modify, delete, rename) gets a timestamp, and I look at the last 5 seconds. If 8 or more events happen in that window, the app raises a CRITIQUE alert, because that is what mass encryption looks like. I also added a second signal that works on its own: if a file appears with a name like a ransom note (`readme`, `decrypt`, `ransom`, `recover`...), the alert fires immediately, even without a burst.
+File monitor and ransomware detection (surveillance_fichiers.py)
 
-### USB monitor (`surveillance_usb.py`)
-An infected USB drive is one of the most realistic ways to get into an isolated industrial system (Stuxnet is the famous example), so I wanted this covered. Every 2 seconds the app checks which removable drives are connected. When a new one shows up, it scans only the root of the drive, so it stays fast, looking for `.exe .bat .cmd .vbs .vbe .ps1 .scr .js .jar`. If it finds any, the alert is CRITIQUE. A clean drive is SUSPECT, and removing a drive is just INFO.
+This one uses watchdog to watch a folder. Every file event (create, modify, delete, rename) gets a timestamp, and I look at the last 5 seconds. If 8 or more events happen in that window, the app raises a CRITIQUE alert, because that is what mass encryption looks like. I also added a second signal that works on its own: if a file appears with a name like a ransom note (readme, decrypt, ransom, recover...), the alert fires immediately, even without a burst.
 
-### Network and process monitors (`surveillance_reseau.py`, `surveillance_processus.py`)
-Both use `psutil`. The network monitor lists the active connections and flags any remote port that is not in a short list of common ones (80, 443, 53, 22...). The process monitor lists what is running and flags programs launched from a temporary folder, which is a classic warning sign that EDR tools also look for.
+USB monitor (surveillance_usb.py)
 
-### Audit log that shows if someone changed it (`app.py`)
+An infected USB drive is one of the most realistic ways to get into an isolated industrial system (Stuxnet is the famous example), so I wanted this covered. Every 2 seconds the app checks which removable drives are connected. When a new one shows up, it scans only the root of the drive, so it stays fast, looking for .exe .bat .cmd .vbs .vbe .ps1 .scr .js .jar. If it finds any, the alert is CRITIQUE. A clean drive is SUSPECT.
+
+Network and process monitors (surveillance_reseau.py, surveillance_processus.py)
+
+Both use psutil. The network monitor lists the active connections and flags any remote port that is not in a short list of common ones (80, 443, 53, 22...). The process monitor lists what is running and flags programs launched from a temporary folder, which is a classic warning sign that EDR tools also look for.
+
+Audit log that shows if someone changed it (app.py)
+
 Each event stores the SHA-256 hash of the event before it:
 
-```
 hash_i = SHA-256( time | level | module | message | hash_(i-1) )
-```
 
 If someone edits or deletes an entry, every hash after it stops matching. The "Vérifier l'intégrité" button recomputes the whole chain, and the PDF report says whether it is still intact.
 
-### Email alerts (`notifications_email.py`)
-When an event reaches the chosen level (CRITIQUE by default), the app sends an email through Gmail SMTP. It runs in a background thread so it never slows down detection, and there is a cooldown between emails so the inbox does not get flooded.
+Email alerts (notifications_email.py)
 
-### Dashboard and reports
-The interface is a web page made with HTML, CSS and JavaScript, with Chart.js for the charts. It has tabs for Files, Network, Processes, USB, Audit log and Statistics. The admin can export the audit log to Excel or PDF. The interface is in French.
+When an event reaches the chosen level (CRITIQUE by default), the app sends an email through Gmail SMTP. \
 
-## 6. Step 4: Putting it together and testing
+Dashboard and reports
+
+The interface is a web page made with HTML, CSS and JavaScript, with Chart.js for the charts. It has tabs for Files, Network, Processes, USB, Audit log and Statistics. The admin can export the audit log to Excel or PDF. 
+
+6. Step 4: Putting it together and testing
 
 I tested every module with its own scenario first, then tested the whole application from start to finish.
 
-**Simulating a ransomware attack.** I wrote a script that follows the steps of a real attack in an isolated test folder. No real malware is involved. It does this:
+Simulating a ransomware attack. I wrote a script that follows the steps of a real attack in an isolated test folder.
+It does this:
 
-1. Creates normal-looking work documents
-2. "Encrypts" them by overwriting their content with random data
-3. Renames them with a `.locked` extension
-4. Deletes some of them and drops a ransom note
-
-```bash
+Creates normal-looking work documents
+"Encrypts" them by overwriting their content with random data
+Renames them with a .locked extension
+Deletes some of them and drops a ransom note
+bash
 python test_alerte.py            # simple burst: 15 files created quickly
 python test_alerte_avance.py     # the 4-step ransomware simulation
-```
 
-**Other tests I ran:** I plugged in a USB drive containing `test.exe` and `update.bat`, I modified the log on purpose to see if the hash chain would notice, I triggered real alerts and checked that the emails arrived, and I exported the reports.
-
+Other tests I ran: I plugged in a USB drive containing test.exe and update.bat, I modified the log on purpose to see if the hash chain would notice, I triggered real alerts and checked that the emails arrived.
 ## 7. Results
 
 | Test | What I expected | What happened |
