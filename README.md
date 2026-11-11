@@ -85,7 +85,6 @@ Monitors (background threads)  ->  Event queue  ->  Flask server  ->  Hash-chain
  files / USB / network / processes                  classifies         |-> Email alert (CRITIQUE)
                                                     every event        |-> Web dashboard
                                                                        '-> Excel / PDF reports (admin)
-```
 
 **Every event gets a severity level:**
 
@@ -97,6 +96,8 @@ Monitors (background threads)  ->  Event queue  ->  Flask server  ->  Hash-chain
 
 
 ## 5. Step 3: Building module by module
+
+Each part of SCADAGuard was built as its own module with one clear responsibility, and tested alone before being merged into the main app. The modules below cover login, file, USB, network and process monitoring, the audit log, email alerts and the dashboard.
 
 **Login and brute-force protection** (`auth.py`) 🔐
 
@@ -118,9 +119,7 @@ Both use **psutil**. The network monitor lists the active connections and flags 
 
 Each event stores the **SHA-256 hash** of the event before it:
 
-```
 hash_i = SHA-256( time | level | module | message | hash_(i-1) )
-```
 
 If someone edits or deletes an entry, every hash after it stops matching. The **"Vérifier l'intégrité"** button recomputes the whole chain, and the PDF report says whether it is still intact.
 
@@ -134,7 +133,7 @@ The interface is a web page made with **HTML, CSS and JavaScript**, with **Chart
 
 ## 6. Step 4: Integration and testing
 
-I tested every module with its own scenario first, then tested the whole application from start to finish.
+Once every module was validated on its own, I assembled them and tested the whole application from start to finish: first with a scenario for each module, then with the full chain.
 
 **Simulating a ransomware attack.** I wrote a script that follows the steps of a real attack in an isolated test folder. It does this:
 
