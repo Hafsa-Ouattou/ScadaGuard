@@ -43,13 +43,6 @@ It combines two detection styles:
 ## 2. The approach: four steps
 
 
- ┌──────────────┐   ┌──────────────┐   ┌────────────────────┐   ┌──────────────────┐
- │ 1. Gather    │ → │ 2. Design    │ → │ 3. Build iteratively│ → │ 4. Integrate and │
- │    the needs │   │    modular   │   │    module by module │   │    test end to   │
- │              │   │  architecture│   │                        │        end        │
- └──────────────┘   └──────────────┘   └────────────────────┘   └──────────────────┘
-
-
 | Step | What I did |
 |---|---|
 | **1. Gather the needs** | Used the site visit to identify the main families of risk to cover: unauthorized access, ransomware-like behaviour, suspicious network activity, malicious processes, unauthorized removable devices. |
