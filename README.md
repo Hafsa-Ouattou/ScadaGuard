@@ -15,7 +15,6 @@ SCADAGuard is a **host-based intrusion detection system (HIDS)** that watches a 
 6. [Step 4: Integration and testing](#6-step-4-integration-and-testing)
 7. [Results](#7-results)
 8. [What I learned and what is still missing](#8-what-i-learned-and-what-is-still-missing)
-9. [Run it yourself](#9-run-it-yourself)
 
 ---
 
@@ -32,7 +31,7 @@ These systems are critical for the continuity of a public service, yet they rely
 Workstations are usually protected by perimeter defences (firewall, access control) and by user awareness. Those watch mostly **incoming traffic, not what happens on the workstation itself**. A threat that gets past the perimeter, such as an infected USB drive or a malicious attachment, can go unnoticed locally.
 
 
-### Design choice: detect, don't block
+### Design choice: 
 
 SCADAGuard is a **HIDS**, It observes and alerts.The operator keeps direct access, and SCADAGuard's login only protects its own dashboard. On a critical system, a security tool that could interrupt operations would be a risk of its own.
 
@@ -43,13 +42,13 @@ It combines two detection styles:
 
 ## 2. The approach: four steps
 
-```
+
  ┌──────────────┐   ┌──────────────┐   ┌────────────────────┐   ┌──────────────────┐
  │ 1. Gather    │ → │ 2. Design    │ → │ 3. Build iteratively│ → │ 4. Integrate and │
  │    the needs │   │    modular   │   │    module by module │   │    test end to   │
- │              │   │    architecture│  │    (test each alone)│   │    end           │
+ │              │   │  architecture│   │                        │        end        │
  └──────────────┘   └──────────────┘   └────────────────────┘   └──────────────────┘
-```
+
 
 | Step | What I did |
 |---|---|
@@ -58,11 +57,9 @@ It combines two detection styles:
 | **3. Build module by module** | Developed each module and tested it in isolation, for example by simulating ransomware behaviour to validate the file monitor, **before** merging it into the main app. This made it possible to find and fix errors at a fine-grained level instead of on the whole system. |
 | **4. Integrate and test end to end** | Assembled the validated modules and tested the full chain: login, navigation between tabs, real alert triggering, email reception, report export. |
 
-The project began as a Tkinter desktop prototype and was then moved to a **Flask web app**, so the dashboard can be opened from any browser. The security logic stayed in Python.
 
 ## 3. Step 1: Understanding the needs
 
-The site visit was turned into a functional specification:
 
 | Need | Description |
 |---|---|
@@ -74,7 +71,7 @@ The site visit was turned into a functional specification:
 | USB monitoring | Detect removable devices and suspicious content |
 | Audit log | Centralize every security event |
 | Statistics | Visualize how events are distributed |
-| Export | Excel / PDF report, admin only |
+| Export | Excel / PDF report |
 | Notifications | Automatic email on a critical event |
 
 ## 4. Step 2: Designing the architecture
@@ -183,6 +180,6 @@ python test_alerte_avance.py     # the 4-step ransomware simulation
 - **Simulating the attack taught me more than reading my own code.** It showed me that a "many files in a few seconds" rule is not enough on its own, and that is why I added the ransom-note check.
 - **A security tool has to be careful itself.** That is why it only watches and alerts, why passwords are hashed, why accounts get locked after failed attempts, and why the log can prove it was not changed.
 
-**Built with:** Python, Flask, watchdog, psutil, argon2-cffi, openpyxl, ReportLab, smtplib, HTML / CSS / JavaScript, Chart.js, Visual Studio Code
+**Built with:** Python, Flask, watchdog, psutil, argon2-cffi, openpyxl, ReportLab, smtplib, HTML / CSS / JavaScript, Chart.js.
 
 *Hafsa Ouattou · ENSA Fès · Internship at ONEE – Water Branch, July 2026.*
